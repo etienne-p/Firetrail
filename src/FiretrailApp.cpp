@@ -1,6 +1,9 @@
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
+#include "cinder/params/Params.h"
+
+#include "Rope.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -8,6 +11,10 @@ using namespace std;
 
 class FiretrailApp : public App {
   public:
+    
+    static constexpr size_t NUM_ROPE_NODES = 40;
+    static constexpr size_t NUM_PARTICLES = NUM_ROPE_NODES * 2;
+    
 	void setup() override;
 	void mouseDown( MouseEvent event ) override;
     void mouseMove( MouseEvent event ) override;
@@ -15,22 +22,21 @@ class FiretrailApp : public App {
 	void update() override;
 	void draw() override;
     
+    params::InterfaceGlRef	mParams;
     gl::VboMeshRef	mVboMesh;
     gl::TextureRef	mTexture;
     float           mAttractorStrength{1.0f};
     float           mRestDist{.1f};
     vec3            mAttractorPosition{.0f};
-    
-    static constexpr size_t NUM_PARTICLES = 40;
-    
-    struct Particle { vec3 position{.0f}, prevPosition{.0f}; };
-    vector<Particle> particles;
+    Rope            mRope{NUM_ROPE_NODES};
     
 };
 
 void FiretrailApp::setup()
 {
-    for (auto i = 0; i < NUM_PARTICLES; ++i) particles.push_back(Particle());
+    mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
+    
+    mRope.setupParams(mParams);
     
     int numVertices = 1000;
     
@@ -97,6 +103,8 @@ void FiretrailApp::draw()
     gl::draw(mVboMesh);
     
     gl::setWireframeEnabled(false);
+    
+    mRope.debugDr
 }
 
 CINDER_APP( FiretrailApp, RendererGl )
