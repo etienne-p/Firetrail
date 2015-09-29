@@ -41,6 +41,7 @@
 		736B1F3C3C9F4788978A2D1B /* Firetrail_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = "\"\""; path = Firetrail_Prefix.pch; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Firetrail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Firetrail.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9107F8F26D8340CEA510305D /* Resources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
+		E424586C1BBAF04000AE6AC0 /* Spline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Spline.h; path = ../src/Spline.h; sourceTree = "<group>"; };
 		E45FC4371BB5EFE100979E70 /* Rope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Rope.h; path = ../src/Rope.h; sourceTree = "<group>"; };
 		F7BD27B90F5A4156A7D77437 /* FiretrailApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; name = FiretrailApp.cpp; path = ../src/FiretrailApp.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -79,6 +80,7 @@
 			children = (
 				F7BD27B90F5A4156A7D77437 /* FiretrailApp.cpp */,
 				E45FC4371BB5EFE100979E70 /* Rope.h */,
+				E424586C1BBAF04000AE6AC0 /* Spline.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
