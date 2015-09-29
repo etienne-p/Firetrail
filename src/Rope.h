@@ -38,19 +38,19 @@ public:
     // Except for the head
     Particle& getHead() { return particles[0]; }
     Particle const& getHead() const { return particles[0]; }
-   
+    
     void UpdateHeadToTail() { UpdateParticles(1, particles.size(), forces); }
     
     void UpdateTailToHead() { UpdateParticles(particles.size() - 2, -1, forces); }
     
-    void setupParams(cinder::params::InterfaceGl * mParams)
+    void setupParams(cinder::params::InterfaceGlRef mParams)
     {
         mParams->addParam( "Rope Inverse Friction", &invFriction).min(.0f).max(1.0f);
         mParams->addParam( "Rope Strength", &strength).min(.0f).max(1.0f);
         mParams->addParam( "Rope Link Length", &linkLength);
         mParams->addParam( "Rope Particles Count", &particlesCount).min(3).updateFn( [this] { reset(particlesCount); } );
     }
-
+    
     void drawDebug()
     {
         {
@@ -84,14 +84,14 @@ public:
     
 private:
     
-    size_t particlesCount;
+    int particlesCount;
     
     std::vector<Particle> particles;
     
     void UpdateParticles(size_t from, size_t to, glm::vec3 forces)
     {
         const auto d = from < to ? 1 : -1;
-                
+        
         for (size_t i = from; i != to; i = i + d)
         {
             const auto tmp = particles[i].position * (1 + invFriction) - particles[i].prevPosition * invFriction + forces;

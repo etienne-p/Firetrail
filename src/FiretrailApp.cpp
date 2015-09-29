@@ -2,6 +2,8 @@
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 #include "cinder/params/Params.h"
+#include "cinder/Camera.h"
+
 
 #include "Rope.h"
 
@@ -16,6 +18,7 @@ class FiretrailApp : public App {
     static constexpr size_t NUM_PARTICLES = NUM_ROPE_NODES * 2;
     
 	void setup() override;
+    void resize() override;
 	void mouseDown( MouseEvent event ) override;
     void mouseMove( MouseEvent event ) override;
     void mouseDrag( MouseEvent event ) override;
@@ -23,10 +26,12 @@ class FiretrailApp : public App {
 	void draw() override;
     
     params::InterfaceGlRef	mParams;
+    CameraPersp     mCamera;
     gl::VboMeshRef	mVboMesh;
     gl::TextureRef	mTexture;
     float           mAttractorStrength{1.0f};
     float           mRestDist{.1f};
+    float           mAttractorFactor{.2f};
     vec3            mAttractorPosition{.0f};
     Rope            mRope{NUM_ROPE_NODES};
     
@@ -34,8 +39,10 @@ class FiretrailApp : public App {
 
 void FiretrailApp::setup()
 {
-    mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
+    mCamera.lookAt(vec3(.0f, .0f, -1.0f), vec3(.0f));
     
+    mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
+    mParams->addParam( "Attractor Factor", &mAttractorFactor).min(.0f).max(1.0f);
     mRope.setupParams(mParams);
     
     int numVertices = 1000;
@@ -54,7 +61,13 @@ void FiretrailApp::setup()
     
     mVboMesh = gl::VboMesh::create( numVertices, GL_TRIANGLE_STRIP, bufferLayout);
     mVboMesh->bufferAttrib(geom::Attrib::TEX_COORD_0, texCoords);
+    
+    resize();
+}
 
+void FiretrailApp::resize()
+{
+    mCamera.setPerspective(60, getWindowAspectRatio(), 1, 20);
 }
 
 void FiretrailApp::mouseDown( MouseEvent event )
@@ -63,7 +76,11 @@ void FiretrailApp::mouseDown( MouseEvent event )
 
 void FiretrailApp::mouseMove( MouseEvent event )
 {
-    mAttractorPosition = vec3(event.getX(), event.getY(), .0f);
+    const auto ray = mCamera.generateRay(event.getPos(), getWindowSize());
+    float result = .0f;
+    ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, .0f, 1.0f), &result);
+    mAttractorPosition = ray.calcPosition(result);
+    cout << "x: " << mAttractorPosition.x << " y: " << mAttractorPosition.y << " z: " << mAttractorPosition.z <<endl;
 }
 
 void FiretrailApp::mouseDrag( MouseEvent event )
@@ -73,23 +90,32 @@ void FiretrailApp::mouseDrag( MouseEvent event )
 
 void FiretrailApp::update()
 {
+    mRope.getHead().position = mAttractorPosition;//(mAttractorPosition - mRope.getHead().position) * mAttractorFactor;
+    mRope.UpdateHeadToTail();
+    
     // update normals & positions
     // write only ?
+    /*
     auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::Attrib::POSITION, false );
     for( int i = 0; i < mVboMesh->getNumVertices(); i++ ) {
         //vec3 &pos = *mappedPosAttrib;
         mappedPosAttrib->y = .0f;
         ++mappedPosAttrib;
     }
-    mappedPosAttrib.unmap();
+    mappedPosAttrib.unmap();*/
 }
 
 void FiretrailApp::draw()
 {
+    const gl::ScopedViewport scopedVPort(vec2(0,0), getWindowSize());
+    const gl::ScopedMatrices scopedMatrices;
+    gl::setMatrices( mCamera );
+    
 	gl::clear( Color( 0, 0, 0 ) );
     
     gl::color(Color::white());
     
+    /*
     gl::setWireframeEnabled(true);
     
     // set "global" (ie common to every slice)
@@ -102,9 +128,11 @@ void FiretrailApp::draw()
     
     gl::draw(mVboMesh);
     
-    gl::setWireframeEnabled(false);
+    gl::setWireframeEnabled(false);*/
     
-    mRope.debugDr
+    mRope.drawDebug();
+    
+    mParams->draw();
 }
 
 CINDER_APP( FiretrailApp, RendererGl )
