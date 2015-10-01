@@ -13,16 +13,15 @@ class Spline
 {
 public:
     
-    Spline()
+    Spline(size_t size)
     {
-        const auto size = 100;
+        reset(size);
+    }
+    
+    void reset(size_t size)
+    {
         points.resize(size);
         arcLengthLookup.resize(size);
-        for (size_t i = 0; i < size; ++i)
-        {
-            points.push_back(glm::vec3());
-            arcLengthLookup.push_back(.0f);
-        }
     }
     
     float getLength() const { return curveLength; }

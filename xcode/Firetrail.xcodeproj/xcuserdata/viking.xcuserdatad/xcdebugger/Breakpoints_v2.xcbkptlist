@@ -24,12 +24,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../src/FiretrailApp.cpp"
-            timestampString = "465316166.554947"
+            timestampString = "465412963.10173"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "83"
-            endingLineNumber = "83"
-            landmarkName = "FiretrailApp::mouseMove( MouseEvent event )"
+            startingLineNumber = "81"
+            endingLineNumber = "81"
+            landmarkName = "FiretrailApp::mouseDown( MouseEvent event )"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>

@@ -15,8 +15,8 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_ROPE_NODES = 40;
-    static constexpr size_t NUM_PARTICLES = NUM_ROPE_NODES * 2;
+    static constexpr size_t NUM_SPLINE_NODES = 80;
+    static constexpr size_t NUM_SUBDIVISIONS = 12;
     
 	void setup() override;
     void resize() override;
@@ -34,8 +34,8 @@ class FiretrailApp : public App {
     float           mRestDist{.1f};
     float           mAttractorFactor{.2f};
     vec3            mAttractorPosition{.0f};
-    Rope            mRope{NUM_ROPE_NODES};
-    Spline          mSpline;
+    vec3            mHeadPosition{.0f};
+    Spline          mSpline{100};
 };
 
 void FiretrailApp::setup()
@@ -43,10 +43,9 @@ void FiretrailApp::setup()
     mCamera.lookAt(vec3(.0f, .0f, -1.0f), vec3(.0f));
     
     mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
-    mParams->addParam( "Attractor Factor", &mAttractorFactor).min(.0f).max(1.0f);
-    mRope.setupParams(mParams);
     
-    int numVertices = 1000;
+    const auto numVertices = NUM_SPLINE_NODES * NUM_SUBDIVISIONS;
+    const auto numIndices = (NUM_SPLINE_NODES - 1) * (NUM_SUBDIVISIONS - 1) * 3 * 2;
     
     // Specify two planar buffers - positions are dynamic because they will be modified
     // in the update() loop. Tex Coords are static since we don't need to update them.
@@ -57,10 +56,45 @@ void FiretrailApp::setup()
     
     // compute texture coordinates
     vector<vec2> texCoords;
-    texCoords.reserve(numVertices);
-    for (auto i = 0; i < numVertices; ++i) texCoords.push_back(vec2(.0f, i % 2 == 0 ? .0f : 1.0f));
+    texCoords.resize(numVertices);
     
-    mVboMesh = gl::VboMesh::create( numVertices, GL_TRIANGLE_STRIP, bufferLayout);
+    int k = -1;
+    
+    for (int i = 0; i < NUM_SPLINE_NODES; ++i)
+    {
+        for (int j = 0; j < NUM_SUBDIVISIONS; ++j)
+        {
+            texCoords[++k] = vec2();
+        }
+    }
+    
+    // Compute indices
+    vector<uint32_t> indices( numIndices );
+    indices.resize(numIndices);
+    
+    k = -1;
+    
+    for (int i = 0; i < NUM_SPLINE_NODES - 1; ++i)
+    {
+        for (int j = 0; j < NUM_SUBDIVISIONS - 1; ++j)
+        {
+            // tri 1
+            indices[++k] = (j + 0) * NUM_SUBDIVISIONS + (i + 0);
+            indices[++k] = (j + 0) * NUM_SUBDIVISIONS + (i + 1);
+            indices[++k] = (j + 1) * NUM_SUBDIVISIONS + (i + 0);
+            
+            // tri 2
+            indices[++k] = (j + 0) * NUM_SUBDIVISIONS + (i + 1);
+            indices[++k] = (j + 1) * NUM_SUBDIVISIONS + (i + 1);
+            indices[++k] = (j + 1) * NUM_SUBDIVISIONS + (i + 0);
+        }
+    }
+    
+    // https://github.com/cinder/Cinder/blob/78a50802db7d038ddc449d6a13ba326e053184aa/samples/_opengl/NVidiaComputeParticles/src/NVidiaComputeParticlesApp.cpp
+    const auto indicesVbo = gl::Vbo::create<uint32_t>( GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW );
+    
+    mVboMesh = gl::VboMesh::create( numVertices, geom::Primitive::TRIANGLES, bufferLayout,
+                                    numIndices, geom::Primitive::TRIANGLES, indicesVbo);
     mVboMesh->bufferAttrib(geom::Attrib::TEX_COORD_0, texCoords);
     
     resize();
@@ -82,8 +116,6 @@ void FiretrailApp::mouseMove( MouseEvent event )
     ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, .0f, 1.0f), &result);
     mAttractorPosition = ray.calcPosition(result);
     cout << "x: " << mAttractorPosition.x << " y: " << mAttractorPosition.y << " z: " << mAttractorPosition.z <<endl;
-    
-    mSpline.pushPoint(mAttractorPosition);
 }
 
 void FiretrailApp::mouseDrag( MouseEvent event )
@@ -93,8 +125,8 @@ void FiretrailApp::mouseDrag( MouseEvent event )
 
 void FiretrailApp::update()
 {
-    mRope.getHead().position = mAttractorPosition;//(mAttractorPosition - mRope.getHead().position) * mAttractorFactor;
-    mRope.UpdateHeadToTail();
+    mHeadPosition += (mAttractorPosition - mHeadPosition) * .2f;
+    mSpline.pushPoint(mHeadPosition);
     
     // update normals & positions
     // write only ?
@@ -125,7 +157,7 @@ void FiretrailApp::draw()
         const auto d = min(1.0f, length / 10);
         for (auto i = 0; i < 10; ++i)
         {
-            gl::drawSphere(mSpline.positionAtLength(d * i), .2f);
+            gl::drawSphere(mSpline.positionAtLength(d * i), .02f);
         }
     }
     
@@ -144,9 +176,7 @@ void FiretrailApp::draw()
     
     gl::setWireframeEnabled(false);*/
     
-    mRope.drawDebug();
-    
-    mParams->draw();
+    //mParams->draw();
 }
 
 CINDER_APP( FiretrailApp, RendererGl )
