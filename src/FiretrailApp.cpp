@@ -6,6 +6,7 @@
 
 
 #include "Rope.h"
+#include "Spline.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -34,7 +35,7 @@ class FiretrailApp : public App {
     float           mAttractorFactor{.2f};
     vec3            mAttractorPosition{.0f};
     Rope            mRope{NUM_ROPE_NODES};
-    
+    Spline          mSpline;
 };
 
 void FiretrailApp::setup()
@@ -81,6 +82,8 @@ void FiretrailApp::mouseMove( MouseEvent event )
     ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, .0f, 1.0f), &result);
     mAttractorPosition = ray.calcPosition(result);
     cout << "x: " << mAttractorPosition.x << " y: " << mAttractorPosition.y << " z: " << mAttractorPosition.z <<endl;
+    
+    mSpline.pushPoint(mAttractorPosition);
 }
 
 void FiretrailApp::mouseDrag( MouseEvent event )
@@ -114,6 +117,17 @@ void FiretrailApp::draw()
 	gl::clear( Color( 0, 0, 0 ) );
     
     gl::color(Color::white());
+    
+    const auto length = mSpline.getLength();
+    
+    if (length > .0f)
+    {
+        const auto d = min(1.0f, length / 10);
+        for (auto i = 0; i < 10; ++i)
+        {
+            gl::drawSphere(mSpline.positionAtLength(d * i), .2f);
+        }
+    }
     
     /*
     gl::setWireframeEnabled(true);
