@@ -35,7 +35,7 @@ class FiretrailApp : public App {
     float           mAttractorFactor{.2f};
     vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
-    Spline          mSpline{100};
+    Spline          mSpline{200};
 };
 
 void FiretrailApp::setup()
@@ -51,7 +51,7 @@ void FiretrailApp::setup()
     // in the update() loop. Tex Coords are static since we don't need to update them.
     vector<gl::VboMesh::Layout> bufferLayout = {
         gl::VboMesh::Layout().usage( GL_DYNAMIC_DRAW ).attrib( geom::Attrib::POSITION, 3 ),
-        gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::TEX_COORD_0, 2 ),
+        //gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::TEX_COORD_0, 2 ),
     };
     
     // compute texture coordinates
@@ -64,7 +64,8 @@ void FiretrailApp::setup()
     {
         for (int j = 0; j < NUM_SUBDIVISIONS; ++j)
         {
-            texCoords[++k] = vec2();
+            texCoords[++k] = vec2((float)i / (float)(NUM_SPLINE_NODES - 1),
+                                  (float)j / (float)(NUM_SUBDIVISIONS - 1));
         }
     }
     
@@ -90,12 +91,12 @@ void FiretrailApp::setup()
         }
     }
     
-    // https://github.com/cinder/Cinder/blob/78a50802db7d038ddc449d6a13ba326e053184aa/samples/_opengl/NVidiaComputeParticles/src/NVidiaComputeParticlesApp.cpp
     const auto indicesVbo = gl::Vbo::create<uint32_t>( GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW );
     
-    mVboMesh = gl::VboMesh::create( numVertices, geom::Primitive::TRIANGLES, bufferLayout,
-                                    numIndices, geom::Primitive::TRIANGLES, indicesVbo);
-    mVboMesh->bufferAttrib(geom::Attrib::TEX_COORD_0, texCoords);
+    mVboMesh = gl::VboMesh::create( numVertices, GL_TRIANGLES, bufferLayout,
+                                    numIndices, GL_UNSIGNED_SHORT, indicesVbo);
+    
+    //mVboMesh->bufferAttrib(geom::Attrib::TEX_COORD_0, texCoords);
     
     resize();
 }
@@ -128,16 +129,31 @@ void FiretrailApp::update()
     mHeadPosition += (mAttractorPosition - mHeadPosition) * .2f;
     mSpline.pushPoint(mHeadPosition);
     
+    const auto length = mSpline.getLength();
+    if (length <= .0f) return;
+    
     // update normals & positions
     // write only ?
-    /*
-    auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::Attrib::POSITION, false );
-    for( int i = 0; i < mVboMesh->getNumVertices(); i++ ) {
-        //vec3 &pos = *mappedPosAttrib;
-        mappedPosAttrib->y = .0f;
-        ++mappedPosAttrib;
+    
+    auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::Attrib::POSITION );
+    
+    const auto d = min(1.0f, length / (float)NUM_SPLINE_NODES);
+        
+    for (int i = 0; i < NUM_SPLINE_NODES; ++i)
+    {
+        const auto splinePos = mSpline.positionAtLength(d * i);
+        
+        for (int j = 0; j < NUM_SUBDIVISIONS; ++j)
+        {
+            vec3 p = splinePos + vec3(.0f, j * .02f, .0f);
+            mappedPosAttrib->x = p.x;
+            mappedPosAttrib->y = p.y;
+            mappedPosAttrib->z = p.z;
+            mappedPosAttrib++;
+        }
     }
-    mappedPosAttrib.unmap();*/
+    
+    mappedPosAttrib.unmap();
 }
 
 void FiretrailApp::draw()
@@ -149,19 +165,7 @@ void FiretrailApp::draw()
 	gl::clear( Color( 0, 0, 0 ) );
     
     gl::color(Color::white());
-    
-    const auto length = mSpline.getLength();
-    
-    if (length > .0f)
-    {
-        const auto d = min(1.0f, length / 10);
-        for (auto i = 0; i < 10; ++i)
-        {
-            gl::drawSphere(mSpline.positionAtLength(d * i), .02f);
-        }
-    }
-    
-    /*
+
     gl::setWireframeEnabled(true);
     
     // set "global" (ie common to every slice)
@@ -174,7 +178,7 @@ void FiretrailApp::draw()
     
     gl::draw(mVboMesh);
     
-    gl::setWireframeEnabled(false);*/
+    gl::setWireframeEnabled(false);
     
     //mParams->draw();
 }
