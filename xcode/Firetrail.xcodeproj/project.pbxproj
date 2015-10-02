@@ -20,6 +20,7 @@
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		C55898AE558B41968A701917 /* FiretrailApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7BD27B90F5A4156A7D77437 /* FiretrailApp.cpp */; };
+		E48C3EFB1BBF450E005E9202 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = E48C3EFA1BBF450E005E9202 /* assets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		9107F8F26D8340CEA510305D /* Resources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
 		E424586C1BBAF04000AE6AC0 /* Spline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Spline.h; path = ../src/Spline.h; sourceTree = "<group>"; };
 		E45FC4371BB5EFE100979E70 /* Rope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Rope.h; path = ../src/Rope.h; sourceTree = "<group>"; };
+		E48C3EFA1BBF450E005E9202 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../assets; sourceTree = "<group>"; };
 		F7BD27B90F5A4156A7D77437 /* FiretrailApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; name = FiretrailApp.cpp; path = ../src/FiretrailApp.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -129,6 +131,7 @@
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
+				E48C3EFA1BBF450E005E9202 /* assets */,
 			);
 			name = Firetrail;
 			sourceTree = "<group>";
@@ -213,6 +216,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0CAD1268F864418BBC66423E /* CinderApp.icns in Resources */,
+				E48C3EFB1BBF450E005E9202 /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
