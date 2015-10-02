@@ -15,8 +15,8 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 24;
-    static constexpr size_t NUM_SUBDIVISIONS = 4;
+    static constexpr size_t NUM_SPLINE_NODES = 128;
+    static constexpr size_t NUM_SUBDIVISIONS = 16;
     
 	void setup() override;
     void resize() override;
@@ -35,7 +35,7 @@ class FiretrailApp : public App {
     float           mAttractorFactor{.2f};
     vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
-    Spline          mSpline{200};
+    Spline          mSpline{256};
 };
 
 void FiretrailApp::setup()
@@ -47,27 +47,20 @@ void FiretrailApp::setup()
     const auto numVertices = NUM_SPLINE_NODES * NUM_SUBDIVISIONS;
     const auto numIndices = (NUM_SPLINE_NODES - 1) * (NUM_SUBDIVISIONS - 1) * 6;
     
-    // Specify two planar buffers - positions are dynamic because they will be modified
-    // in the update() loop. Tex Coords are static since we don't need to update them.
-    vector<gl::VboMesh::Layout> bufferLayout = {
-        gl::VboMesh::Layout().usage( GL_DYNAMIC_DRAW ).attrib( geom::Attrib::POSITION, 3 ),
-        //gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::TEX_COORD_0, 2 ),
-    };
-    
     // compute texture coordinates
     vector<vec2> texCoords;
     texCoords.resize(numVertices);
     
     int k = -1;
-    
-    for (int i = 0; i < NUM_SPLINE_NODES; ++i)
+    /*
+    for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
-        for (int j = 0; j < NUM_SUBDIVISIONS; ++j)
+        for (size_t j = 0; j < NUM_SUBDIVISIONS; ++j)
         {
             texCoords[++k] = vec2((float)i / (float)(NUM_SPLINE_NODES - 1),
                                   (float)j / (float)(NUM_SUBDIVISIONS - 1));
         }
-    }
+    }*/
     
     // Compute indices
     vector<uint32_t> indices( numIndices );
@@ -75,14 +68,14 @@ void FiretrailApp::setup()
     
     k = -1;
     
-    for (int i = 0; i < NUM_SPLINE_NODES - 1; ++i)
+    for (size_t i = 0; i < NUM_SPLINE_NODES - 1; ++i)
     {
-        for (int j = 0; j < NUM_SUBDIVISIONS - 1; ++j)
+        for (size_t j = 0; j < NUM_SUBDIVISIONS - 1; ++j)
         {
             // tri 1
-            indices[++k] = (j + 0) + (i + 0) * NUM_SUBDIVISIONS;
-            indices[++k] = (j + 0) + (i + 1) * NUM_SUBDIVISIONS;
-            indices[++k] = (j + 1) + (i + 0) * NUM_SUBDIVISIONS;
+            indices[++k] = (j + 0) + ((i + 0) * NUM_SUBDIVISIONS);
+            indices[++k] = (j + 0) + ((i + 1) * NUM_SUBDIVISIONS);
+            indices[++k] = (j + 1) + ((i + 0) * NUM_SUBDIVISIONS);
             
             // tri 2
             indices[++k] = (j + 0) + (i + 1) * NUM_SUBDIVISIONS;
@@ -93,8 +86,13 @@ void FiretrailApp::setup()
     
     const auto indicesVbo = gl::Vbo::create<uint32_t>( GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW );
     
+    vector<gl::VboMesh::Layout> bufferLayout = {
+        gl::VboMesh::Layout().usage( GL_DYNAMIC_DRAW ).attrib( geom::POSITION, 3 )
+        //gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::TEX_COORD_0, 2 ),
+    };
+    
     mVboMesh = gl::VboMesh::create( numVertices, GL_TRIANGLES, bufferLayout,
-                                    numIndices, GL_UNSIGNED_SHORT, indicesVbo);
+                                    numIndices, GL_UNSIGNED_INT, indicesVbo);
     
     //mVboMesh->bufferAttrib(geom::Attrib::TEX_COORD_0, texCoords);
     
@@ -116,10 +114,6 @@ void FiretrailApp::mouseMove( MouseEvent event )
     float result = .0f;
     ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, .0f, 1.0f), &result);
     mAttractorPosition = ray.calcPosition(result);
-    cout << "x: " << mAttractorPosition.x << " y: " << mAttractorPosition.y << " z: " << mAttractorPosition.z <<endl;
-    
-    
-    mSpline.pushPoint(mAttractorPosition);
 }
 
 void FiretrailApp::mouseDrag( MouseEvent event )
@@ -129,30 +123,23 @@ void FiretrailApp::mouseDrag( MouseEvent event )
 
 void FiretrailApp::update()
 {
-    //mHeadPosition += (mAttractorPosition - mHeadPosition) * .2f;
-    //mSpline.pushPoint(mHeadPosition);
+    mHeadPosition += (mAttractorPosition - mHeadPosition) * .2f;
+    mSpline.pushPoint(mHeadPosition);
     
     const auto length = mSpline.getLength();
     if (length <= .0f) return;
     
-    // update normals & positions
-    // write only ?
+    auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::POSITION );
     
-    auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::Attrib::POSITION );
-    
-    const auto d = min(20.0f, length / (float)NUM_SPLINE_NODES);
+    const auto d = min(5.0f, length / (float)NUM_SPLINE_NODES);
         
-    for (int i = 0; i < NUM_SPLINE_NODES; ++i)
+    for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
         const auto splinePos = mSpline.positionAtLength(d * i);
         
-        for (int j = 0; j < NUM_SUBDIVISIONS; ++j)
+        for (size_t j = 0; j < NUM_SUBDIVISIONS; ++j)
         {
-            vec3 p = splinePos + vec3(.0f, j * .1f, .0f);
-            mappedPosAttrib->x = p.x;
-            mappedPosAttrib->y = p.y;
-            mappedPosAttrib->z = p.z;
-            mappedPosAttrib++;
+            *mappedPosAttrib++ = splinePos + vec3(.0f, j * .1f, .0f);
         }
     }
     
