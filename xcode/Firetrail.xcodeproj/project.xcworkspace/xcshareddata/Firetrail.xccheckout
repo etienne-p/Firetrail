@@ -7,14 +7,14 @@
 	<key>IDESourceControlProjectIdentifier</key>
 	<string>B754BA3D-2592-4253-B2E2-0B29647384C2</string>
 	<key>IDESourceControlProjectName</key>
-	<string>Firetrail</string>
+	<string>project</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>1D5C39F5997678CF043B18F764340C9542F92067</key>
 		<string>https://bitbucket.org/etienne-p/firetrail.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>xcode/Firetrail.xcodeproj</string>
+	<string>xcode/Firetrail.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>1D5C39F5997678CF043B18F764340C9542F92067</key>
@@ -34,7 +34,7 @@
 			<key>IDESourceControlWCCIdentifierKey</key>
 			<string>1D5C39F5997678CF043B18F764340C9542F92067</string>
 			<key>IDESourceControlWCCName</key>
-			<string>Firetrail</string>
+			<string>firetrail</string>
 		</dict>
 	</array>
 </dict>

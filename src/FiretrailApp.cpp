@@ -15,8 +15,8 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 80;
-    static constexpr size_t NUM_SUBDIVISIONS = 12;
+    static constexpr size_t NUM_SPLINE_NODES = 24;
+    static constexpr size_t NUM_SUBDIVISIONS = 4;
     
 	void setup() override;
     void resize() override;
@@ -45,7 +45,7 @@ void FiretrailApp::setup()
     mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
     
     const auto numVertices = NUM_SPLINE_NODES * NUM_SUBDIVISIONS;
-    const auto numIndices = (NUM_SPLINE_NODES - 1) * (NUM_SUBDIVISIONS - 1) * 3 * 2;
+    const auto numIndices = (NUM_SPLINE_NODES - 1) * (NUM_SUBDIVISIONS - 1) * 6;
     
     // Specify two planar buffers - positions are dynamic because they will be modified
     // in the update() loop. Tex Coords are static since we don't need to update them.
@@ -80,14 +80,14 @@ void FiretrailApp::setup()
         for (int j = 0; j < NUM_SUBDIVISIONS - 1; ++j)
         {
             // tri 1
-            indices[++k] = (j + 0) * NUM_SUBDIVISIONS + (i + 0);
-            indices[++k] = (j + 0) * NUM_SUBDIVISIONS + (i + 1);
-            indices[++k] = (j + 1) * NUM_SUBDIVISIONS + (i + 0);
+            indices[++k] = (j + 0) + (i + 0) * NUM_SUBDIVISIONS;
+            indices[++k] = (j + 0) + (i + 1) * NUM_SUBDIVISIONS;
+            indices[++k] = (j + 1) + (i + 0) * NUM_SUBDIVISIONS;
             
             // tri 2
-            indices[++k] = (j + 0) * NUM_SUBDIVISIONS + (i + 1);
-            indices[++k] = (j + 1) * NUM_SUBDIVISIONS + (i + 1);
-            indices[++k] = (j + 1) * NUM_SUBDIVISIONS + (i + 0);
+            indices[++k] = (j + 0) + (i + 1) * NUM_SUBDIVISIONS;
+            indices[++k] = (j + 1) + (i + 1) * NUM_SUBDIVISIONS;
+            indices[++k] = (j + 1) + (i + 0) * NUM_SUBDIVISIONS;
         }
     }
     
@@ -117,6 +117,9 @@ void FiretrailApp::mouseMove( MouseEvent event )
     ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, .0f, 1.0f), &result);
     mAttractorPosition = ray.calcPosition(result);
     cout << "x: " << mAttractorPosition.x << " y: " << mAttractorPosition.y << " z: " << mAttractorPosition.z <<endl;
+    
+    
+    mSpline.pushPoint(mAttractorPosition);
 }
 
 void FiretrailApp::mouseDrag( MouseEvent event )
@@ -126,8 +129,8 @@ void FiretrailApp::mouseDrag( MouseEvent event )
 
 void FiretrailApp::update()
 {
-    mHeadPosition += (mAttractorPosition - mHeadPosition) * .2f;
-    mSpline.pushPoint(mHeadPosition);
+    //mHeadPosition += (mAttractorPosition - mHeadPosition) * .2f;
+    //mSpline.pushPoint(mHeadPosition);
     
     const auto length = mSpline.getLength();
     if (length <= .0f) return;
@@ -137,7 +140,7 @@ void FiretrailApp::update()
     
     auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::Attrib::POSITION );
     
-    const auto d = min(1.0f, length / (float)NUM_SPLINE_NODES);
+    const auto d = min(20.0f, length / (float)NUM_SPLINE_NODES);
         
     for (int i = 0; i < NUM_SPLINE_NODES; ++i)
     {
@@ -145,7 +148,7 @@ void FiretrailApp::update()
         
         for (int j = 0; j < NUM_SUBDIVISIONS; ++j)
         {
-            vec3 p = splinePos + vec3(.0f, j * .02f, .0f);
+            vec3 p = splinePos + vec3(.0f, j * .1f, .0f);
             mappedPosAttrib->x = p.x;
             mappedPosAttrib->y = p.y;
             mappedPosAttrib->z = p.z;
