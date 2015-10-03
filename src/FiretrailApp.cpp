@@ -3,7 +3,7 @@
 #include "cinder/gl/gl.h"
 #include "cinder/params/Params.h"
 #include "cinder/Camera.h"
-
+#include "cinder/Perlin.h"
 
 #include "Rope.h"
 #include "Spline.h"
@@ -26,6 +26,8 @@ class FiretrailApp : public App {
 	void update() override;
 	void draw() override;
     
+    void computePerlin(Surface32f& surf, uint8_t octaves, int32_t seed, float scale);
+    
     params::InterfaceGlRef	mParams;
     CameraPersp     mCamera;
     gl::VboMeshRef	mVboMesh;
@@ -47,9 +49,14 @@ void FiretrailApp::setup()
     
     // load fire texture
     gl::Texture::Format mTexFormat;
-    mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).mipmap().internalFormat( GL_RGBA );
+    mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );
     mFireTex = gl::Texture::create( loadImage( loadAsset( "firetex.png" ) ), mTexFormat );
-    mNoiseTex = gl::Texture::create( loadImage( loadAsset( "nzw.png" ) ), mTexFormat );
+    
+    Surface32f surf(512, 512, false, SurfaceChannelOrder::RGB);
+    computePerlin(surf, 4, 4, 2);
+    
+    mTexFormat.wrap(GL_REPEAT);
+    mNoiseTex = gl::Texture::create(surf, mTexFormat);
     
     // load shader
     mGlsl = gl::GlslProg::create( loadAsset( "fire.vert" ), loadAsset( "fire.frag" ) );
@@ -166,7 +173,7 @@ void FiretrailApp::draw()
     
     gl::color(Color::white());
 
-    gl::setWireframeEnabled(true);
+    //gl::setWireframeEnabled(true);
     
     // set "global" (ie common to every slice)
     // shader parameters
@@ -188,9 +195,24 @@ void FiretrailApp::draw()
     
     gl::draw(mVboMesh);
     
-    gl::setWireframeEnabled(false);
+    //gl::setWireframeEnabled(false);
     
     //mParams->draw();
+}
+
+void FiretrailApp::computePerlin(Surface32f& surf, uint8_t octaves, int32_t seed, float scale)
+{
+    Perlin perlin(octaves, seed);
+    Area area( 0, 0, surf.getWidth(), surf.getHeight() );
+    Surface32f::Iter iter = surf.getIter( area );
+    
+    while( iter.line() ) {
+        while( iter.pixel() ) {
+            float p = .5f * (1.0f + perlin.fBm(vec2((float)iter.x() / (float)surf.getWidth(),
+                                                    (float)iter.y() / (float)surf.getHeight()) * scale));
+            surf.setPixel(iter.getPos(), ci::Colorf(p, p, p) );
+        }
+    }
 }
 
 CINDER_APP( FiretrailApp, RendererGl )
