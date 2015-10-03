@@ -15,8 +15,8 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 128;
-    static constexpr size_t NUM_SUBDIVISIONS = 16;
+    static constexpr size_t NUM_SPLINE_NODES = 64;
+    static constexpr size_t NUM_SUBDIVISIONS = 8;
     
 	void setup() override;
     void resize() override;
@@ -29,7 +29,8 @@ class FiretrailApp : public App {
     params::InterfaceGlRef	mParams;
     CameraPersp     mCamera;
     gl::VboMeshRef	mVboMesh;
-    gl::TextureRef	mTexture;
+    gl::TextureRef	mFireTex, mNoiseTex;
+    gl::GlslProgRef mGlsl;
     float           mAttractorStrength{1.0f};
     float           mRestDist{.1f};
     float           mAttractorFactor{.2f};
@@ -44,6 +45,15 @@ void FiretrailApp::setup()
     
     mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
     
+    // load fire texture
+    gl::Texture::Format mTexFormat;
+    mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).mipmap().internalFormat( GL_RGBA );
+    mFireTex = gl::Texture::create( loadImage( loadAsset( "firetex.png" ) ), mTexFormat );
+    mNoiseTex = gl::Texture::create( loadImage( loadAsset( "nzw.png" ) ), mTexFormat );
+    
+    // load shader
+    mGlsl = gl::GlslProg::create( loadAsset( "fire.vert" ), loadAsset( "fire.frag" ) );
+
     const auto numVertices = NUM_SPLINE_NODES * NUM_SUBDIVISIONS;
     const auto numIndices = (NUM_SPLINE_NODES - 1) * (NUM_SUBDIVISIONS - 1) * 6;
     
@@ -52,7 +62,7 @@ void FiretrailApp::setup()
     texCoords.resize(numVertices);
     
     int k = -1;
-    /*
+    
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
         for (size_t j = 0; j < NUM_SUBDIVISIONS; ++j)
@@ -60,7 +70,7 @@ void FiretrailApp::setup()
             texCoords[++k] = vec2((float)i / (float)(NUM_SPLINE_NODES - 1),
                                   (float)j / (float)(NUM_SUBDIVISIONS - 1));
         }
-    }*/
+    }
     
     // Compute indices
     vector<uint32_t> indices( numIndices );
@@ -87,14 +97,14 @@ void FiretrailApp::setup()
     const auto indicesVbo = gl::Vbo::create<uint32_t>( GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW );
     
     vector<gl::VboMesh::Layout> bufferLayout = {
-        gl::VboMesh::Layout().usage( GL_DYNAMIC_DRAW ).attrib( geom::POSITION, 3 )
-        //gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::TEX_COORD_0, 2 ),
+        gl::VboMesh::Layout().usage( GL_DYNAMIC_DRAW ).attrib( geom::POSITION, 3 ),
+        gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::TEX_COORD_0, 2 ),
     };
     
     mVboMesh = gl::VboMesh::create( numVertices, GL_TRIANGLES, bufferLayout,
                                     numIndices, GL_UNSIGNED_INT, indicesVbo);
     
-    //mVboMesh->bufferAttrib(geom::Attrib::TEX_COORD_0, texCoords);
+    mVboMesh->bufferAttrib(geom::Attrib::TEX_COORD_0, texCoords);
     
     resize();
 }
@@ -152,7 +162,7 @@ void FiretrailApp::draw()
     const gl::ScopedMatrices scopedMatrices;
     gl::setMatrices( mCamera );
     
-	gl::clear( Color( 0, 0, 0 ) );
+	gl::clear();
     
     gl::color(Color::white());
 
@@ -165,6 +175,16 @@ void FiretrailApp::draw()
     // pass x texCoord to shader
     // pass amp to shader
     // use additive blending
+    
+    gl::ScopedBlendAdditive scopedBlend;
+    gl::ScopedTextureBind texFire( mFireTex, 0);
+    gl::ScopedTextureBind texNoise( mNoiseTex, 1);
+    gl::ScopedGlslProg scpGlsl( mGlsl );
+    
+    mGlsl->uniform("fireTex", 0);
+    mGlsl->uniform("noiseTex", 1);
+    
+    mGlsl->uniform("time", (float)getElapsedSeconds());
     
     gl::draw(mVboMesh);
     
