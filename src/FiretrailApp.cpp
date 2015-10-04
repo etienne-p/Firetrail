@@ -4,6 +4,7 @@
 #include "cinder/params/Params.h"
 #include "cinder/Camera.h"
 #include "cinder/Perlin.h"
+#include "cinder/Easing.h"
 
 #include "Rope.h"
 #include "Spline.h"
@@ -15,8 +16,8 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 64;
-    static constexpr size_t NUM_SUBDIVISIONS = 8;
+    static constexpr size_t NUM_SPLINE_NODES = 128;
+    static constexpr size_t NUM_SUBDIVISIONS = 16;
     
 	void setup() override;
     void resize() override;
@@ -62,12 +63,28 @@ void FiretrailApp::setup()
     
     int k = -1;
     
+    constexpr auto head = .1f;
+    
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
+        const auto t = (float)i / (float)(NUM_SPLINE_NODES - 1);
+        float mul = .0f;
+        
+        if (t < head)
+        {
+            mul = easeOutQuad(t / head);
+        }
+        else
+        {
+            mul = 1.0f - easeInOutSine((t - head) / (1.0f - head));
+        }
+        
+        mul = fmax(.001f, mul); // prevent div by 0
+        
         for (size_t j = 0; j < NUM_SUBDIVISIONS; ++j)
         {
             texCoords[++k] = vec2((float)i / (float)(NUM_SPLINE_NODES - 1),
-                                  (float)j / (float)(NUM_SUBDIVISIONS - 1));
+                                   (float)j / ((float)(NUM_SUBDIVISIONS - 1) * mul));
         }
     }
     
@@ -97,6 +114,7 @@ void FiretrailApp::setup()
     
     vector<gl::VboMesh::Layout> bufferLayout = {
         gl::VboMesh::Layout().usage( GL_DYNAMIC_DRAW ).attrib( geom::POSITION, 3 ),
+        gl::VboMesh::Layout().usage( GL_DYNAMIC_DRAW ).attrib( geom::NORMAL, 3 ),
         gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::TEX_COORD_0, 2 ),
     };
     
@@ -121,7 +139,7 @@ void FiretrailApp::mouseMove( MouseEvent event )
 {
     const auto ray = mCamera.generateRay(event.getPos(), getWindowSize());
     float result = .0f;
-    ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, .0f, 1.0f), &result);
+    ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, -1.0f, 1.0f), &result);
     mAttractorPosition = ray.calcPosition(result);
 }
 
@@ -139,20 +157,33 @@ void FiretrailApp::update()
     if (length <= .0f) return;
     
     auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::POSITION );
+    auto mappedNormalAttrib = mVboMesh->mapAttrib3f( geom::NORMAL );
     
-    const auto d = min(5.0f, length / (float)NUM_SPLINE_NODES);
-        
+    const auto d = min(2.0f, length / (float)NUM_SPLINE_NODES);
+    
+    const auto dl = d * .1f;
+    
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
-        const auto splinePos = mSpline.positionAtLength(d * i);
+        auto l = d * i;
+        const auto splinePos = mSpline.positionAtLength(l);
+        
+        if (l > (length - dl)) l -= dl - (length - l);
+        
+        const auto splinePosL = mSpline.positionAtLength(l);
+        const auto d = splinePosL - mSpline.positionAtLength(l + dl);
+        
+        const auto normal = glm::cross(vec3(.0f, 1.0f, .0f), d);
         
         for (size_t j = 0; j < NUM_SUBDIVISIONS; ++j)
         {
             *mappedPosAttrib++ = splinePos + vec3(.0f, j * .1f, .0f);
+            *mappedNormalAttrib++ = normal;
         }
     }
     
     mappedPosAttrib.unmap();
+    mappedNormalAttrib.unmap();
 }
 
 void FiretrailApp::draw()
@@ -178,10 +209,22 @@ void FiretrailApp::draw()
     gl::ScopedGlslProg scpGlsl( mGlsl );
     
     mGlsl->uniform("fireTex", 0);
-    
     mGlsl->uniform("time", (float)getElapsedSeconds());
     
-    gl::draw(mVboMesh);
+    /*
+    mGlsl->uniform("normalOffset", 1.0f);
+    gl::draw(mVboMesh);*/
+    
+    constexpr auto numSlices = 3;
+    
+    for (size_t i = 0; i < numSlices; ++i)
+    {
+        const auto normalOffset = ((float)i / (float)(numSlices - 1)) * 2.0f - 1.0f;
+        mGlsl->uniform("normalOffset", normalOffset * .2f);
+        gl::draw(mVboMesh);
+    }
+    
+    
     
     //mParams->draw();
 }

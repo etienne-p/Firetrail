@@ -123,7 +123,7 @@ void main()
     
     for (int i = 1; i < 5; ++i)
     {
-        uv.y += .05 * snoise((vPosition - vec3(.0, time, .0)) * 3.0f * i) * .5;
+        uv.y += .05 * snoise((vPosition - vec3(.0, time, .0)) * i * 2.0) * .5;
     }
     
     vec4 t = texture(fireTex, uv);
