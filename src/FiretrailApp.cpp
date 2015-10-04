@@ -48,7 +48,7 @@ void FiretrailApp::setup()
     
     // load fire texture
     gl::Texture::Format mTexFormat;
-    mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );
+    mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
     mFireTex = gl::Texture::create( loadImage( loadAsset( "firetex.png" ) ), mTexFormat );
     
     // load shader
@@ -84,7 +84,7 @@ void FiretrailApp::setup()
         for (size_t j = 0; j < NUM_SUBDIVISIONS; ++j)
         {
             texCoords[++k] = vec2((float)i / (float)(NUM_SPLINE_NODES - 1),
-                                   (float)j / ((float)(NUM_SUBDIVISIONS - 1) * mul));
+                                  (float)j / ((float)(NUM_SUBDIVISIONS - 1) * mul));
         }
     }
     
@@ -209,18 +209,16 @@ void FiretrailApp::draw()
     gl::ScopedGlslProg scpGlsl( mGlsl );
     
     mGlsl->uniform("fireTex", 0);
+    mGlsl->uniform("spread", .3f);
+    mGlsl->uniform("eyePosition", mCamera.getEyePoint());
     mGlsl->uniform("time", (float)getElapsedSeconds());
     
-    /*
-    mGlsl->uniform("normalOffset", 1.0f);
-    gl::draw(mVboMesh);*/
-    
-    constexpr auto numSlices = 3;
+    constexpr auto numSlices = 12;
     
     for (size_t i = 0; i < numSlices; ++i)
     {
         const auto normalOffset = ((float)i / (float)(numSlices - 1)) * 2.0f - 1.0f;
-        mGlsl->uniform("normalOffset", normalOffset * .2f);
+        mGlsl->uniform("normalOffset", normalOffset);
         gl::draw(mVboMesh);
     }
     

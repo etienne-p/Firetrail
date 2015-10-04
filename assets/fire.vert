@@ -6,14 +6,19 @@ in vec3	ciNormal;
 
 uniform mat4 ciModelViewProjection;
 uniform float normalOffset;
+uniform float spread;
+uniform vec3 eyePosition;
 
 smooth out vec2 vTexCoord;
 smooth out vec3 vPosition;
+out float vNormalOffset;
 
 void main()
 {
     // TODO: move vertices using perlin noise
-    vec4 p = ciModelViewProjection * (ciPosition + normalOffset * vec4(normalize(ciNormal), ciPosition.w));
+    vNormalOffset = normalOffset;
+    vec3 eyeDir = normalize(ciPosition.xyz - eyePosition);
+    vec4 p = ciModelViewProjection * (ciPosition + vec4(eyeDir, ciPosition.w) * normalOffset * spread);
     vPosition = p.rgb;
     gl_Position = p;
     vTexCoord = ciTexCoord0;

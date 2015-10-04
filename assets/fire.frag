@@ -114,19 +114,20 @@ uniform float time = .0;
 
 smooth in vec2 vTexCoord;
 smooth in vec3 vPosition;
+in float vNormalOffset;
 
 out vec4 fColor;
 
 void main()
 {
-    vec2 uv = vec2(vTexCoord.y, .5);
+    vec2 uv = vec2(abs(vNormalOffset), vTexCoord.y);
     
-    for (int i = 1; i < 5; ++i)
+    /*for (int i = 1; i < 5; ++i)
     {
         uv.y += .05 * snoise((vPosition - vec3(.0, time, .0)) * i * 2.0) * .5;
-    }
+    }*/
     
-    vec4 t = texture(fireTex, uv);
+    fColor = texture(fireTex, uv);
     
-    fColor = t + vec4(.1);
+    //fColor = vec4(1.0, .0, .0, .3);
 }
