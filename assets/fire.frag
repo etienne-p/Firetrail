@@ -14,6 +14,7 @@
 //               https://github.com/ashima/webgl-noise
 //
 
+/*
 vec3 mod289(vec3 x) {
     return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
@@ -111,23 +112,16 @@ float snoise(vec3 v)
 uniform sampler2D fireTex;
 
 uniform float time = .0;
+*/
 
-smooth in vec2 vTexCoord;
-smooth in vec3 vPosition;
-in float vNormalOffset;
+uniform sampler2D fireTex;
+
+smooth in vec2 texCoord;
+//smooth in vec3 vPosition;
 
 out vec4 fColor;
 
 void main()
 {
-    vec2 uv = vec2(abs(vNormalOffset), vTexCoord.y);
-    
-    /*for (int i = 1; i < 5; ++i)
-    {
-        uv.y += .05 * snoise((vPosition - vec3(.0, time, .0)) * i * 2.0) * .5;
-    }*/
-    
-    fColor = texture(fireTex, uv);
-    
-    //fColor = vec4(1.0, .0, .0, .3);
+    fColor = texture(fireTex, texCoord);
 }
