@@ -110,6 +110,9 @@ float snoise(vec3 v)
 
 uniform sampler2D fireTex;
 uniform float time;
+uniform float octavePow;
+uniform float noiseScale;
+uniform float noiseGain;
 
 smooth in vec2 texCoord;
 smooth in vec3 vPosition;
@@ -120,10 +123,16 @@ void main()
 {
     vec2 uv = texCoord;
     
-    for (int i = 1; i < 5; ++i)
+    for (int i = 1; i < 4; ++i)
     {
-        uv.y += .2 * snoise((vPosition - vec3(.0, time, .0)) * i * 2.0) * .5;
+        uv.y += .2 * snoise((vPosition - vec3(.0, time, .0)) * pow(i, 2)) * .5;
     }
+    
+    uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(1.0, octavePow) * noiseScale);
+    
+    uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(2.0, octavePow) * noiseScale);
+    
+    uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(3.0, octavePow) * noiseScale);
     
     fColor = texture(fireTex, uv) * .2;
 }

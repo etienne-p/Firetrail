@@ -14,7 +14,7 @@ smooth out vec3 vPosition;
 
 void main()
 {
-    const vec4 dw = vec4(1.0, .0, .0, .0);
+    const vec4 dw = vec4(.5, .0, .0, .0);
     const vec4 dh = vec4(.0, 1.0, .0, .0);
 
     texCoord = vec2(.0, .0);

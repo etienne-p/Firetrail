@@ -16,7 +16,7 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 1024;
+    static constexpr size_t NUM_SPLINE_NODES = 512;
     
 	void setup() override;
     void resize() override;
@@ -34,6 +34,9 @@ class FiretrailApp : public App {
     float           mAttractorStrength{1.0f};
     float           mRestDist{.1f};
     float           mAttractorFactor{.2f};
+    float           mOctavePow{1.5f};
+    float           mNoiseScale{.4f};
+    float           mNoiseGain{.4f};
     vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
     Spline          mSpline{256};
@@ -44,11 +47,14 @@ void FiretrailApp::setup()
     mCamera.lookAt(vec3(.0f, .0f, -1.0f), vec3(.0f));
     
     mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
+    mParams->addParam("Noise Scale", &mNoiseScale);
+    mParams->addParam("Noise Gain", &mNoiseGain);
+    mParams->addParam("Octave Pow", &mOctavePow);
     
     // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
-    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame.png" ) ), mTexFormat );
+    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame1.png" ) ), mTexFormat );
     
     // load shader
     mGlsl = gl::GlslProg::create(gl::GlslProg::Format().vertex( loadAsset( "fire.vert" ) )
@@ -112,7 +118,7 @@ void FiretrailApp::update()
     
     auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::POSITION );
     
-    const auto d = min(.1f, length / (float)NUM_SPLINE_NODES);
+    const auto d = min(.01f, length / (float)NUM_SPLINE_NODES);
     
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
@@ -137,11 +143,14 @@ void FiretrailApp::draw()
     gl::ScopedGlslProg scpGlsl( mGlsl );
     
     mGlsl->uniform("fireTex", 0);
-    mGlsl->uniform("time", (float)getElapsedSeconds());
+    mGlsl->uniform("time", (float)getElapsedSeconds() * .5f);
+    mGlsl->uniform("noiseScale", mNoiseScale);
+    mGlsl->uniform("noiseGain", mNoiseGain);
+    mGlsl->uniform("octavePow", mOctavePow);
     
     gl::draw(mVboMesh);
     
-    //mParams->draw();
+    mParams->draw();
 }
 
 CINDER_APP( FiretrailApp, RendererGl )
