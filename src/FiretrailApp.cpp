@@ -16,7 +16,7 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 64;
+    static constexpr size_t NUM_SPLINE_NODES = 12;
     
 	void setup() override;
     void resize() override;
@@ -51,7 +51,9 @@ void FiretrailApp::setup()
     mFireTex = gl::Texture::create( loadImage( loadAsset( "firetex.png" ) ), mTexFormat );
     
     // load shader
-    mGlsl = gl::GlslProg::create( loadAsset( "fire.vert" ), loadAsset( "fire.frag" ) );
+    mGlsl = gl::GlslProg::create(gl::GlslProg::Format().vertex( loadAsset( "fire.vert" ) )
+                                 .fragment( loadAsset( "fire.frag" ) )
+                                 .geometry( loadAsset( "fire.geom" )).attrib( geom::CUSTOM_0, "vSize" ) );
 
     // compute texture coordinates
     vector<float> amp( NUM_SPLINE_NODES );
@@ -110,7 +112,7 @@ void FiretrailApp::update()
     
     auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::POSITION );
     
-    const auto d = min(.2f, length / (float)NUM_SPLINE_NODES);
+    const auto d = min(1.0f, length / (float)NUM_SPLINE_NODES);
     
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
@@ -135,9 +137,7 @@ void FiretrailApp::draw()
     gl::ScopedGlslProg scpGlsl( mGlsl );
     
     mGlsl->uniform("fireTex", 0);
-    const auto viewDir = glm::normalize(mCamera.getViewDirection());
-    mGlsl->uniform("viewDir", viewDir);
-    mGlsl->uniform("time", (float)getElapsedSeconds());
+    //mGlsl->uniform("time", (float)getElapsedSeconds());
     
     gl::draw(mVboMesh);
     

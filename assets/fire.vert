@@ -1,19 +1,14 @@
 #version 330 core
 
 in vec4 ciPosition;
+in float vSize;
 
-uniform mat4 ciModelViewProjection;
+out float size;
 
-smooth out vec2 vTexCoord;
-smooth out vec3 vPosition;
-out float vNormalOffset;
+uniform mat4 ciModelView;
 
 void main()
 {
-    // TODO: move vertices using perlin noise
-    vNormalOffset = normalOffset;
-    vec4 p = ciModelViewProjection * ciPosition;
-    vPosition = p.rgb;
-    gl_Position = p;
-    vTexCoord = ciTexCoord0;
+    size = vSize;
+    gl_Position = ciModelView * ciPosition;
 }
