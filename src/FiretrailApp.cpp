@@ -16,7 +16,7 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 12;
+    static constexpr size_t NUM_SPLINE_NODES = 1024;
     
 	void setup() override;
     void resize() override;
@@ -48,7 +48,7 @@ void FiretrailApp::setup()
     // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
-    mFireTex = gl::Texture::create( loadImage( loadAsset( "firetex.png" ) ), mTexFormat );
+    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame.png" ) ), mTexFormat );
     
     // load shader
     mGlsl = gl::GlslProg::create(gl::GlslProg::Format().vertex( loadAsset( "fire.vert" ) )
@@ -112,7 +112,7 @@ void FiretrailApp::update()
     
     auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::POSITION );
     
-    const auto d = min(1.0f, length / (float)NUM_SPLINE_NODES);
+    const auto d = min(.1f, length / (float)NUM_SPLINE_NODES);
     
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
@@ -137,7 +137,7 @@ void FiretrailApp::draw()
     gl::ScopedGlslProg scpGlsl( mGlsl );
     
     mGlsl->uniform("fireTex", 0);
-    //mGlsl->uniform("time", (float)getElapsedSeconds());
+    mGlsl->uniform("time", (float)getElapsedSeconds());
     
     gl::draw(mVboMesh);
     
