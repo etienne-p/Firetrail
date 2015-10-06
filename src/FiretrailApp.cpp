@@ -16,7 +16,7 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 512;
+    static constexpr size_t NUM_SPLINE_NODES = 1024;
     
 	void setup() override;
     void resize() override;
@@ -34,9 +34,9 @@ class FiretrailApp : public App {
     float           mAttractorStrength{1.0f};
     float           mRestDist{.1f};
     float           mAttractorFactor{.2f};
-    float           mOctavePow{1.5f};
-    float           mNoiseScale{.4f};
-    float           mNoiseGain{.4f};
+    float           mOctavePow{2.2f};
+    float           mNoiseScale{.5f};
+    float           mNoiseGain{.08f};
     vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
     Spline          mSpline{256};
@@ -118,7 +118,7 @@ void FiretrailApp::update()
     
     auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::POSITION );
     
-    const auto d = min(.01f, length / (float)NUM_SPLINE_NODES);
+    const auto d = min(.005f, length / (float)NUM_SPLINE_NODES);
     
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {

@@ -123,16 +123,13 @@ void main()
 {
     vec2 uv = texCoord;
     
-    for (int i = 1; i < 4; ++i)
-    {
-        uv.y += .2 * snoise((vPosition - vec3(.0, time, .0)) * pow(i, 2)) * .5;
-    }
-    
     uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(1.0, octavePow) * noiseScale);
     
     uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(2.0, octavePow) * noiseScale);
     
     uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(3.0, octavePow) * noiseScale);
     
+    uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(4.0, octavePow) * noiseScale);
+
     fColor = texture(fireTex, uv) * .2;
 }
