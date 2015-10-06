@@ -16,7 +16,7 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 24;
+    static constexpr size_t NUM_SPLINE_NODES = 1024;
     
 	void setup() override;
     void resize() override;
@@ -35,11 +35,11 @@ class FiretrailApp : public App {
     float           mRestDist{.1f};
     float           mAttractorFactor{.2f};
     float           mOctavePow{2.2f};
-    float           mNoiseScale{.5f};
-    float           mNoiseGain{.28f};
-    float           mTimeFactor{.5f};
+    float           mNoiseScale{.4f};
+    float           mNoiseGain{.24f};
+    float           mTimeFactor{1.0f};
     float           mFragMul{.24f};
-    float           mMaxDSlice{.01f};
+    float           mMaxDSlice{.1f};
     vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
     Spline          mSpline{256};
@@ -60,7 +60,7 @@ void FiretrailApp::setup()
     // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
-    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame2.png" ) ), mTexFormat );
+    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame2_blur.png" ) ), mTexFormat );
     
     // load shader
     mGlsl = gl::GlslProg::create(gl::GlslProg::Format().vertex( loadAsset( "fire.vert" ) )
