@@ -113,6 +113,7 @@ uniform float time;
 uniform float octavePow;
 uniform float noiseScale;
 uniform float noiseGain;
+uniform float fragMul;
 
 smooth in vec2 texCoord;
 smooth in vec3 vPosition;
@@ -123,13 +124,17 @@ void main()
 {
     vec2 uv = texCoord;
     
-    uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(1.0, octavePow) * noiseScale);
+    //float t = uv.y;
     
-    uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(2.0, octavePow) * noiseScale);
+    float mul = noiseGain * uv.y;
     
-    uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(3.0, octavePow) * noiseScale);
+    uv.y += mul * snoise((vPosition - vec3(.0, time, .0)) * pow(1.0, octavePow) * noiseScale);
     
-    uv.y += noiseGain * snoise((vPosition - vec3(.0, time, .0)) * pow(4.0, octavePow) * noiseScale);
+    uv.y += mul * snoise((vPosition - vec3(.0, time, .0)) * pow(2.0, octavePow) * noiseScale);
+    
+    uv.y += mul * snoise((vPosition - vec3(.0, time, .0)) * pow(3.0, octavePow) * noiseScale);
+    
+    uv.y += mul * snoise((vPosition - vec3(.0, time, .0)) * pow(4.0, octavePow) * noiseScale);
 
-    fColor = texture(fireTex, uv) * .2;
+    fColor = texture(fireTex, uv) * fragMul;
 }

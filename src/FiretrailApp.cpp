@@ -16,7 +16,7 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 1024;
+    static constexpr size_t NUM_SPLINE_NODES = 24;
     
 	void setup() override;
     void resize() override;
@@ -36,7 +36,10 @@ class FiretrailApp : public App {
     float           mAttractorFactor{.2f};
     float           mOctavePow{2.2f};
     float           mNoiseScale{.5f};
-    float           mNoiseGain{.08f};
+    float           mNoiseGain{.28f};
+    float           mTimeFactor{.5f};
+    float           mFragMul{.24f};
+    float           mMaxDSlice{.01f};
     vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
     Spline          mSpline{256};
@@ -50,11 +53,14 @@ void FiretrailApp::setup()
     mParams->addParam("Noise Scale", &mNoiseScale);
     mParams->addParam("Noise Gain", &mNoiseGain);
     mParams->addParam("Octave Pow", &mOctavePow);
+    mParams->addParam("Time Factor", &mTimeFactor);
+    mParams->addParam("Frag Mul", &mFragMul);
+    mParams->addParam("Max D Slice", &mMaxDSlice);
     
     // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
-    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame1.png" ) ), mTexFormat );
+    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame2.png" ) ), mTexFormat );
     
     // load shader
     mGlsl = gl::GlslProg::create(gl::GlslProg::Format().vertex( loadAsset( "fire.vert" ) )
@@ -118,7 +124,7 @@ void FiretrailApp::update()
     
     auto mappedPosAttrib = mVboMesh->mapAttrib3f( geom::POSITION );
     
-    const auto d = min(.005f, length / (float)NUM_SPLINE_NODES);
+    const auto d = min(mMaxDSlice, length / (float)NUM_SPLINE_NODES);
     
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
@@ -143,10 +149,12 @@ void FiretrailApp::draw()
     gl::ScopedGlslProg scpGlsl( mGlsl );
     
     mGlsl->uniform("fireTex", 0);
-    mGlsl->uniform("time", (float)getElapsedSeconds() * .5f);
+    mGlsl->uniform("time", (float)getElapsedSeconds() * mTimeFactor);
     mGlsl->uniform("noiseScale", mNoiseScale);
     mGlsl->uniform("noiseGain", mNoiseGain);
     mGlsl->uniform("octavePow", mOctavePow);
+    mGlsl->uniform("fragMul", mFragMul);
+
     
     gl::draw(mVboMesh);
     
