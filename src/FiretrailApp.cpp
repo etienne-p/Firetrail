@@ -36,8 +36,9 @@ class FiretrailApp : public App {
     float           mAttractorFactor{.2f};
     float           mLacunarity{2.0f};
     float           mGain{.5f};
-    float           mMagnitude{1.3f};
-    float           mTimeFactor{.5f};
+    float           mNoiseScale{10.0f};
+    float           mMagnitude{.8f};
+    float           mTimeFactor{1.0f};
     float           mFragMul{.24f};
     float           mMaxDSlice{.01f};
     vec3            mAttractorPosition{.0f};
@@ -56,7 +57,8 @@ void FiretrailApp::setup()
     mParams->addParam("Time Factor", &mTimeFactor);
     mParams->addParam("Frag Mul", &mFragMul);
     mParams->addParam("Max D Slice", &mMaxDSlice);
-    
+    mParams->addParam("Noise Scale", &mNoiseScale);
+
     // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
@@ -144,7 +146,6 @@ void FiretrailApp::draw()
     gl::setMatrices( mCamera );
     
 	gl::clear();
-    
     gl::color(Color::white());
 
     gl::ScopedBlendAdditive scopedBlend;
@@ -159,6 +160,7 @@ void FiretrailApp::draw()
     mGlsl->uniform("gain", mGain);
     mGlsl->uniform("magnitude", mMagnitude);
     mGlsl->uniform("lacunarity", mLacunarity);
+    mGlsl->uniform("noiseScale", mNoiseScale);
     
     gl::draw(mVboMesh);
     

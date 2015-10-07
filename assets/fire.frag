@@ -8,6 +8,7 @@ uniform float fragMul;
 uniform float lacunarity;
 uniform float gain;
 uniform float magnitude;
+uniform float noiseScale;
 
 smooth in vec2 texCoord;
 smooth in vec3 vPosition;
@@ -68,7 +69,7 @@ void main()
 {
     vec2 uv = texCoord;
     
-    uv.y += sqrt(uv.y) * magnitude * turbulence(vPosition - vec3(.0, time, .0));
+    uv.y += sqrt(uv.y) * magnitude * turbulence((vPosition - vec3(.0, time, .0)) * noiseScale);
     
     fColor = texture(fireTex, uv) * fragMul;
 }
