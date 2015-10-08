@@ -35,11 +35,11 @@ class FiretrailApp : public App {
     float           mRestDist{.1f};
     float           mAttractorFactor{.2f};
     float           mLacunarity{2.0f};
-    float           mGain{.5f};
-    float           mNoiseScale{10.0f};
-    float           mMagnitude{.8f};
+    float           mGain{.2f};
+    float           mNoiseScale{5.0f};
+    float           mMagnitude{1.0f};
     float           mTimeFactor{1.0f};
-    float           mFragMul{.24f};
+    float           mFragMul{.2f};
     float           mMaxDSlice{.01f};
     vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
@@ -62,7 +62,7 @@ void FiretrailApp::setup()
     // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
-    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame2.png" ) ), mTexFormat );
+    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame4.png" ) ), mTexFormat );
     
     mTexFormat.wrap(GL_REPEAT);
     mNoiseTex = gl::Texture::create( loadImage( loadAsset( "nzw.png" ) ), mTexFormat );
