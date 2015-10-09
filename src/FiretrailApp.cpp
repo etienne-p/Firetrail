@@ -31,6 +31,7 @@ class FiretrailApp : public App {
     gl::VboMeshRef	mVboMesh;
     gl::TextureRef	mFireTex, mNoiseTex;
     gl::GlslProgRef mGlsl;
+    gl::BatchRef    mBatch;
     float           mAttractorStrength{1.0f};
     float           mRestDist{.1f};
     float           mAttractorFactor{.2f};
@@ -41,6 +42,7 @@ class FiretrailApp : public App {
     float           mTimeFactor{1.0f};
     float           mFragMul{.2f};
     float           mMaxDSlice{.01f};
+    float           mFps{.0f};
     vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
     Spline          mSpline{256};
@@ -51,14 +53,15 @@ void FiretrailApp::setup()
     mCamera.lookAt(vec3(.0f, .0f, -1.0f), vec3(.0f));
     
     mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
-    mParams->addParam("Gain", &mGain);
-    mParams->addParam("Lacunarity", &mLacunarity);
-    mParams->addParam("Magnitude", &mMagnitude);
-    mParams->addParam("Time Factor", &mTimeFactor);
-    mParams->addParam("Frag Mul", &mFragMul);
+    mParams->addParam("FPS", &mFps);
     mParams->addParam("Max D Slice", &mMaxDSlice);
-    mParams->addParam("Noise Scale", &mNoiseScale);
-
+    mParams->addParam("Time Factor", &mTimeFactor);
+    mParams->addParam("Gain", &mGain).updateFn( [this] { mGlsl->uniform("gain", mGain);} );
+    mParams->addParam("Lacunarity", &mLacunarity).updateFn( [this] { mGlsl->uniform("lacunarity", mLacunarity);} );
+    mParams->addParam("Magnitude", &mMagnitude).updateFn( [this] { mGlsl->uniform("magnitude", mMagnitude);} );
+    mParams->addParam("Frag Mul", &mFragMul).updateFn( [this] { mGlsl->uniform("fragMul", mFragMul);} );
+    mParams->addParam("Noise Scale", &mNoiseScale).updateFn( [this] { mGlsl->uniform("noiseScale", mNoiseScale);} );
+    
     // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
@@ -72,6 +75,15 @@ void FiretrailApp::setup()
                                  .fragment( loadAsset( "fire.frag" ) )
                                  .geometry( loadAsset( "fire.geom" )).attrib( geom::CUSTOM_0, "vSize" ) );
 
+    mGlsl->uniform("fireTex", 0);
+    mGlsl->uniform("noiseTex", 1);
+    
+    mGlsl->uniform("fragMul", mFragMul);
+    mGlsl->uniform("gain", mGain);
+    mGlsl->uniform("magnitude", mMagnitude);
+    mGlsl->uniform("lacunarity", mLacunarity);
+    mGlsl->uniform("noiseScale", mNoiseScale);
+    
     // compute texture coordinates
     vector<float> amp( NUM_SPLINE_NODES );
     amp.resize(NUM_SPLINE_NODES);
@@ -93,6 +105,8 @@ void FiretrailApp::setup()
     mVboMesh = gl::VboMesh::create( NUM_SPLINE_NODES, GL_POINTS, bufferLayout);
     
     mVboMesh->bufferAttrib(geom::Attrib::CUSTOM_0, amp);
+    
+    mBatch = gl::Batch::create(mVboMesh, mGlsl);
     
     resize();
 }
@@ -137,6 +151,8 @@ void FiretrailApp::update()
     }
     
     mappedPosAttrib.unmap();
+    
+    mFps = getAverageFps();
 }
 
 void FiretrailApp::draw()
@@ -151,18 +167,10 @@ void FiretrailApp::draw()
     gl::ScopedBlendAdditive scopedBlend;
     gl::ScopedTextureBind texFire( mFireTex, 0);
     gl::ScopedTextureBind noiseFire( mNoiseTex, 1);
-    gl::ScopedGlslProg scpGlsl( mGlsl );
     
-    mGlsl->uniform("fireTex", 0);
-    mGlsl->uniform("noiseTex", 1);
     mGlsl->uniform("time", (float)getElapsedSeconds() * mTimeFactor);
-    mGlsl->uniform("fragMul", mFragMul);
-    mGlsl->uniform("gain", mGain);
-    mGlsl->uniform("magnitude", mMagnitude);
-    mGlsl->uniform("lacunarity", mLacunarity);
-    mGlsl->uniform("noiseScale", mNoiseScale);
     
-    gl::draw(mVboMesh);
+    mBatch->draw();
     
     mParams->draw();
 }
