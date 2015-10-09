@@ -9,6 +9,6 @@ uniform mat4 ciModelView;
 
 void main()
 {
-    size = .4 + .6 * vSize;
+    size = vSize;
     gl_Position = ciModelView * ciPosition;
 }
