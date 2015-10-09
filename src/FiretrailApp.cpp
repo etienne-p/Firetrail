@@ -62,7 +62,7 @@ void FiretrailApp::setup()
     // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
-    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame4.png" ) ), mTexFormat );
+    mFireTex = gl::Texture::create( loadImage( loadAsset( "flame5.png" ) ), mTexFormat );
     
     mTexFormat.wrap(GL_REPEAT);
     mNoiseTex = gl::Texture::create( loadImage( loadAsset( "nzw.png" ) ), mTexFormat );
