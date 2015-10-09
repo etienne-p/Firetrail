@@ -16,7 +16,7 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 1024;
+    static constexpr size_t NUM_SPLINE_NODES = 1024 * 8;
     
 	void setup() override;
     void resize() override;
@@ -56,13 +56,12 @@ void FiretrailApp::setup()
     mParams->addParam("FPS", &mFps);
     mParams->addParam("Max D Slice", &mMaxDSlice);
     mParams->addParam("Time Factor", &mTimeFactor);
-    mParams->addParam("Gain", &mGain).updateFn( [this] { mGlsl->uniform("gain", mGain);} );
-    mParams->addParam("Lacunarity", &mLacunarity).updateFn( [this] { mGlsl->uniform("lacunarity", mLacunarity);} );
-    mParams->addParam("Magnitude", &mMagnitude).updateFn( [this] { mGlsl->uniform("magnitude", mMagnitude);} );
-    mParams->addParam("Frag Mul", &mFragMul).updateFn( [this] { mGlsl->uniform("fragMul", mFragMul);} );
-    mParams->addParam("Noise Scale", &mNoiseScale).updateFn( [this] { mGlsl->uniform("noiseScale", mNoiseScale);} );
+    mParams->addParam("Gain",           &mGain      ).updateFn( [this] { mGlsl->uniform("gain", mGain);} );
+    mParams->addParam("Lacunarity",     &mLacunarity).updateFn( [this] { mGlsl->uniform("lacunarity", mLacunarity);} );
+    mParams->addParam("Magnitude",      &mMagnitude ).updateFn( [this] { mGlsl->uniform("magnitude", mMagnitude);} );
+    mParams->addParam("Frag Mul",       &mFragMul   ).updateFn( [this] { mGlsl->uniform("fragMul", mFragMul);} );
+    mParams->addParam("Noise Scale",    &mNoiseScale).updateFn( [this] { mGlsl->uniform("noiseScale", mNoiseScale);} );
     
-    // load fire texture
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
     mFireTex = gl::Texture::create( loadImage( loadAsset( "flame5.png" ) ), mTexFormat );
@@ -70,8 +69,8 @@ void FiretrailApp::setup()
     mTexFormat.wrap(GL_REPEAT);
     mNoiseTex = gl::Texture::create( loadImage( loadAsset( "nzw.png" ) ), mTexFormat );
     
-    // load shader
-    mGlsl = gl::GlslProg::create(gl::GlslProg::Format().vertex( loadAsset( "fire.vert" ) )
+    mGlsl = gl::GlslProg::create(gl::GlslProg::Format()
+                                 .vertex( loadAsset( "fire.vert" ) )
                                  .fragment( loadAsset( "fire.frag" ) )
                                  .geometry( loadAsset( "fire.geom" )).attrib( geom::CUSTOM_0, "vSize" ) );
 
@@ -97,12 +96,10 @@ void FiretrailApp::setup()
         else amp[i] = 1.0f - easeInOutSine((t - head) / (1.0f - head));
     }
     
-    vector<gl::VboMesh::Layout> bufferLayout = {
+    mVboMesh = gl::VboMesh::create( NUM_SPLINE_NODES, GL_POINTS, {
         gl::VboMesh::Layout().usage( GL_DYNAMIC_DRAW ).attrib( geom::POSITION, 3 ),
         gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::CUSTOM_0, 1 ),
-    };
-    
-    mVboMesh = gl::VboMesh::create( NUM_SPLINE_NODES, GL_POINTS, bufferLayout);
+    });
     
     mVboMesh->bufferAttrib(geom::Attrib::CUSTOM_0, amp);
     

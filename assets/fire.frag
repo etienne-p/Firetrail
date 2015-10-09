@@ -39,14 +39,6 @@ float turbulence(vec3 pos)
     float freq = 1.0;
     float amp = 1.0;
     
-    // to be unrolled
-    /*for(int i = 0; i < 4; i++)
-    {
-        sum += abs(mnoise(pos * freq)) * amp;
-        freq *= lacunarity;
-        amp *= gain;
-    }*/
-    
     sum += abs(mnoise(pos * freq)) * amp;
     freq *= lacunarity;
     amp *= gain;
