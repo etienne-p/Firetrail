@@ -37,9 +37,10 @@ class FiretrailApp : public App {
     float           mNoiseScale{5.0f};
     float           mMagnitude{1.0f};
     float           mTimeFactor{1.0f};
-    float           mFragMul{.3f};
-    float           mMaxDSlice{.04f};
+    float           mFragMul{.1f};
+    float           mMaxDSlice{.02f};
     float           mFps{.0f};
+    float           mLayerOffset{-.1f};
     vec3            mHeadPosition{.0f};
     Spline          mSpline{256};
 };
@@ -57,6 +58,9 @@ void FiretrailApp::setup()
     mParams->addParam("Magnitude",      &mMagnitude ).updateFn( [this] { mGlsl->uniform("magnitude", mMagnitude);} );
     mParams->addParam("Frag Mul",       &mFragMul   ).updateFn( [this] { mGlsl->uniform("fragMul", mFragMul);} );
     mParams->addParam("Noise Scale",    &mNoiseScale).updateFn( [this] { mGlsl->uniform("noiseScale", mNoiseScale);} );
+    mParams->addParam("Layer Offset",    &mLayerOffset).updateFn( [this] { mGlsl->uniform("layerOffset", mLayerOffset);} );
+    
+    
     
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
@@ -78,7 +82,8 @@ void FiretrailApp::setup()
     mGlsl->uniform("magnitude", mMagnitude);
     mGlsl->uniform("lacunarity", mLacunarity);
     mGlsl->uniform("noiseScale", mNoiseScale);
-    
+    mGlsl->uniform("layerOffset", mLayerOffset);
+
     // compute texture coordinates
     vector<float> amp( NUM_SPLINE_NODES );
     amp.resize(NUM_SPLINE_NODES);
