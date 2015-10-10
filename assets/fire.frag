@@ -64,5 +64,5 @@ void main()
     
     uv.y += sqrt(uv.y) * magnitude * turbulence((vPosition - vec3(.0, time, .0)) * noiseScale);
     
-    fColor = texture(fireTex, uv) * fragMul * fSize;
+    fColor = texture(fireTex, uv) * fragMul;// * fSize;
 }

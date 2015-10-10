@@ -16,13 +16,10 @@ using namespace std;
 class FiretrailApp : public App {
   public:
     
-    static constexpr size_t NUM_SPLINE_NODES = 1024 * 8;
+    static constexpr size_t NUM_SPLINE_NODES = 1024;
     
 	void setup() override;
     void resize() override;
-	void mouseDown( MouseEvent event ) override;
-    void mouseMove( MouseEvent event ) override;
-    void mouseDrag( MouseEvent event ) override;
 	void update() override;
 	void draw() override;
     
@@ -40,10 +37,9 @@ class FiretrailApp : public App {
     float           mNoiseScale{5.0f};
     float           mMagnitude{1.0f};
     float           mTimeFactor{1.0f};
-    float           mFragMul{.2f};
-    float           mMaxDSlice{.01f};
+    float           mFragMul{.3f};
+    float           mMaxDSlice{.04f};
     float           mFps{.0f};
-    vec3            mAttractorPosition{.0f};
     vec3            mHeadPosition{.0f};
     Spline          mSpline{256};
 };
@@ -87,13 +83,10 @@ void FiretrailApp::setup()
     vector<float> amp( NUM_SPLINE_NODES );
     amp.resize(NUM_SPLINE_NODES);
     
-    constexpr auto head = .1f;
-    
     for (size_t i = 0; i < NUM_SPLINE_NODES; ++i)
     {
         const auto t = (float)i / (float)(NUM_SPLINE_NODES - 1);
-        if (t < head) amp[i] = easeOutQuad(t / head);
-        else amp[i] = 1.0f - easeInOutSine((t - head) / (1.0f - head));
+        amp[i] = 1.0f - easeInOutSine(t);
     }
     
     mVboMesh = gl::VboMesh::create( NUM_SPLINE_NODES, GL_POINTS, {
@@ -110,29 +103,16 @@ void FiretrailApp::setup()
 
 void FiretrailApp::resize()
 {
-    mCamera.setPerspective(60, getWindowAspectRatio(), 1, 20);
-}
-
-void FiretrailApp::mouseDown( MouseEvent event )
-{
-}
-
-void FiretrailApp::mouseMove( MouseEvent event )
-{
-    const auto ray = mCamera.generateRay(event.getPos(), getWindowSize());
-    float result = .0f;
-    ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, -1.0f, 1.0f), &result);
-    mAttractorPosition = ray.calcPosition(result);
-}
-
-void FiretrailApp::mouseDrag( MouseEvent event )
-{
-    mouseMove(event);
+    mCamera.setPerspective(60, getWindowAspectRatio(), 1, 50);
 }
 
 void FiretrailApp::update()
 {
-    mHeadPosition += (mAttractorPosition - mHeadPosition) * .2f;
+    const auto ray = mCamera.generateRay(getMousePos() - getWindowPos(), getWindowSize());
+    float result = .0f;
+    ray.calcPlaneIntersection(vec3(.0f, .0f, 5.0f), vec3(.0f, -2.0f, 1.0f), &result);
+    
+    mHeadPosition += (ray.calcPosition(result) - mHeadPosition) * .8f;
     mSpline.pushPoint(mHeadPosition);
     
     const auto length = mSpline.getLength();
