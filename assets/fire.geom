@@ -6,7 +6,7 @@ uniform mat4 ciProjectionMatrix;
 uniform float layerOffset;
 
 layout (points) in;
-layout (triangle_strip, max_vertices = 32) out;
+layout (triangle_strip, max_vertices = 16) out;
 
 in float[] size;
 
@@ -22,7 +22,7 @@ void main()
     
     float cSize = size[0];
     
-    for(int i = 0; i < 8; ++i)
+    for(int i = 0; i < 4; ++i)
     {
         //vec4 offset = vec4(.0, .0, i * layerOffset, .0);
         
