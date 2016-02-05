@@ -30,6 +30,7 @@ class FiretrailApp : public App {
     void resize() override;
 	void update() override;
 	void draw() override;
+    void cleanup() override;
     void endMovieRecording();
     void startMovieRecording();
     
@@ -189,6 +190,11 @@ void FiretrailApp::draw()
     mBatch->draw();
     
     mParams->draw();
+}
+
+void FiretrailApp::cleanup()
+{
+    if (mRecordingMovie) endMovieRecording();
 }
 
 void FiretrailApp::startMovieRecording()
