@@ -44,19 +44,18 @@ class FiretrailApp : public App {
     float                  mAttractorStrength{1.0f};
     float                  mRestDist{.1f};
     float                  mAttractorFactor{.2f};
-    float                  mLacunarity{2.0f};
-    float                  mGain{.2f};
-    float                  mNoiseScale{5.0f};
-    float                  mMagnitude{1.0f};
+    float                  mLacunarity{1.0f};
+    float                  mGain{.02f};
+    float                  mNoiseScale{6.0f};
+    float                  mMagnitude{2.0f};
     float                  mTimeFactor{1.0f};
-    float                  mFragMul{.1f};
+    float                  mFragMul{.08f};
     float                  mMaxDSlice{.02f};
     float                  mFps{.0f};
-    float                  mLayerOffset{-.1f};
+    float                  mLayerOffset{-.24f};
     vec3                   mHeadPosition{.0f};
     Spline                 mSpline{256};
     bool                   mRecordingMovie{false};
-    bool                   mRecordingSessionStarted{false};
 };
 
 void FiretrailApp::setup()
@@ -76,9 +75,7 @@ void FiretrailApp::setup()
     
     mParams->addButton("Start Recording", [this]
     {
-        if (mRecordingSessionStarted) return;
-        startMovieRecording();
-        mRecordingSessionStarted = true;
+        if (!mRecordingMovie) startMovieRecording();
     });
     
     mParams->addButton("End Recording", [this]
@@ -218,9 +215,9 @@ void FiretrailApp::startMovieRecording()
 
 void FiretrailApp::endMovieRecording()
 {
-    mRecordingMovie = false;
     mMovieExporter->finish();
     mMovieExporter.reset();
+    mRecordingMovie = false;
 }
 
 CINDER_APP( FiretrailApp, RendererGl, prepareSettings)
