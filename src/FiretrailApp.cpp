@@ -5,6 +5,7 @@
 #include "cinder/Camera.h"
 #include "cinder/Perlin.h"
 #include "cinder/Easing.h"
+#include "cinder/qtime/AvfWriter.h"
 
 #include "Rope.h"
 #include "Spline.h"
@@ -13,36 +14,48 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+void prepareSettings( App::Settings *settings )
+{
+    settings->setWindowSize( 1280, 720 ); //HD 720p
+    settings->setFullScreen( false );
+}
+
 class FiretrailApp : public App {
   public:
     
     static constexpr size_t NUM_SPLINE_NODES = 1024;
-    
+    static constexpr int MAX_MOVIE_FRAMES = 1024;
+
 	void setup() override;
     void resize() override;
 	void update() override;
 	void draw() override;
+    void endMovieRecording();
+    void startMovieRecording();
     
-    params::InterfaceGlRef	mParams;
-    CameraPersp     mCamera;
-    gl::VboMeshRef	mVboMesh;
-    gl::TextureRef	mFireTex, mNoiseTex;
-    gl::GlslProgRef mGlsl;
-    gl::BatchRef    mBatch;
-    float           mAttractorStrength{1.0f};
-    float           mRestDist{.1f};
-    float           mAttractorFactor{.2f};
-    float           mLacunarity{2.0f};
-    float           mGain{.2f};
-    float           mNoiseScale{5.0f};
-    float           mMagnitude{1.0f};
-    float           mTimeFactor{1.0f};
-    float           mFragMul{.1f};
-    float           mMaxDSlice{.02f};
-    float           mFps{.0f};
-    float           mLayerOffset{-.1f};
-    vec3            mHeadPosition{.0f};
-    Spline          mSpline{256};
+    qtime::MovieWriterRef  mMovieExporter;
+    params::InterfaceGlRef mParams;
+    CameraPersp            mCamera;
+    gl::VboMeshRef	       mVboMesh;
+    gl::TextureRef	       mFireTex, mNoiseTex;
+    gl::GlslProgRef        mGlsl;
+    gl::BatchRef           mBatch;
+    float                  mAttractorStrength{1.0f};
+    float                  mRestDist{.1f};
+    float                  mAttractorFactor{.2f};
+    float                  mLacunarity{2.0f};
+    float                  mGain{.2f};
+    float                  mNoiseScale{5.0f};
+    float                  mMagnitude{1.0f};
+    float                  mTimeFactor{1.0f};
+    float                  mFragMul{.1f};
+    float                  mMaxDSlice{.02f};
+    float                  mFps{.0f};
+    float                  mLayerOffset{-.1f};
+    vec3                   mHeadPosition{.0f};
+    Spline                 mSpline{256};
+    bool                   mRecordingMovie{false};
+    bool                   mRecordingSessionStarted{false};
 };
 
 void FiretrailApp::setup()
@@ -51,16 +64,26 @@ void FiretrailApp::setup()
     
     mParams = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( ivec2( 200, 300 ) ) );
     mParams->addParam("FPS", &mFps);
-    mParams->addParam("Max D Slice", &mMaxDSlice);
-    mParams->addParam("Time Factor", &mTimeFactor);
-    mParams->addParam("Gain",           &mGain      ).updateFn( [this] { mGlsl->uniform("gain", mGain);} );
-    mParams->addParam("Lacunarity",     &mLacunarity).updateFn( [this] { mGlsl->uniform("lacunarity", mLacunarity);} );
-    mParams->addParam("Magnitude",      &mMagnitude ).updateFn( [this] { mGlsl->uniform("magnitude", mMagnitude);} );
-    mParams->addParam("Frag Mul",       &mFragMul   ).updateFn( [this] { mGlsl->uniform("fragMul", mFragMul);} );
-    mParams->addParam("Noise Scale",    &mNoiseScale).updateFn( [this] { mGlsl->uniform("noiseScale", mNoiseScale);} );
-    mParams->addParam("Layer Offset",    &mLayerOffset).updateFn( [this] { mGlsl->uniform("layerOffset", mLayerOffset);} );
+    mParams->addParam("Max D Slice",  &mMaxDSlice);
+    mParams->addParam("Time Factor",  &mTimeFactor);
+    mParams->addParam("Gain",         &mGain      ).updateFn( [this] { mGlsl->uniform("gain", mGain);} );
+    mParams->addParam("Lacunarity",   &mLacunarity).updateFn( [this] { mGlsl->uniform("lacunarity", mLacunarity);} );
+    mParams->addParam("Magnitude",    &mMagnitude ).updateFn( [this] { mGlsl->uniform("magnitude", mMagnitude);} );
+    mParams->addParam("Frag Mul",     &mFragMul   ).updateFn( [this] { mGlsl->uniform("fragMul", mFragMul);} );
+    mParams->addParam("Noise Scale",  &mNoiseScale).updateFn( [this] { mGlsl->uniform("noiseScale", mNoiseScale);} );
+    mParams->addParam("Layer Offset", &mLayerOffset).updateFn( [this] { mGlsl->uniform("layerOffset", mLayerOffset);} );
     
+    mParams->addButton("Start Recording", [this]
+    {
+        if (mRecordingSessionStarted) return;
+        startMovieRecording();
+        mRecordingSessionStarted = true;
+    });
     
+    mParams->addButton("End Recording", [this]
+    {
+        if (mRecordingMovie) endMovieRecording();
+    });
     
     gl::Texture::Format mTexFormat;
     mTexFormat.magFilter( GL_LINEAR ).minFilter( GL_LINEAR ).internalFormat( GL_RGBA );//.wrap(GL_REPEAT);
@@ -76,7 +99,6 @@ void FiretrailApp::setup()
 
     mGlsl->uniform("fireTex", 0);
     mGlsl->uniform("noiseTex", 1);
-    
     mGlsl->uniform("fragMul", mFragMul);
     mGlsl->uniform("gain", mGain);
     mGlsl->uniform("magnitude", mMagnitude);
@@ -135,6 +157,18 @@ void FiretrailApp::update()
     mappedPosAttrib.unmap();
     
     mFps = getAverageFps();
+    
+    if (mRecordingMovie)
+    {
+        if( mMovieExporter && getElapsedFrames() > 1 && getElapsedFrames() < MAX_MOVIE_FRAMES )
+        {
+            mMovieExporter->addFrame( copyWindowSurface() );
+        }
+        else if( mMovieExporter && getElapsedFrames() >= MAX_MOVIE_FRAMES )
+        {
+            endMovieRecording();
+        }
+    }
 }
 
 void FiretrailApp::draw()
@@ -157,4 +191,30 @@ void FiretrailApp::draw()
     mParams->draw();
 }
 
-CINDER_APP( FiretrailApp, RendererGl )
+void FiretrailApp::startMovieRecording()
+{
+    fs::path path = getSaveFilePath();
+    if(!path.empty())
+    {
+        auto format = qtime::MovieWriter::Format()
+        .codec( qtime::MovieWriter::H264 )
+        .fileType( qtime::MovieWriter::QUICK_TIME_MOVIE )
+        .jpegQuality( 0.09f )
+        .averageBitsPerSecond( 10000000 );
+        
+        mMovieExporter = qtime::MovieWriter::create( path,
+                                                    getWindowWidth(),
+                                                    getWindowHeight(),
+                                                    format );
+    }
+    mRecordingMovie = true;
+}
+
+void FiretrailApp::endMovieRecording()
+{
+    mRecordingMovie = false;
+    mMovieExporter->finish();
+    mMovieExporter.reset();
+}
+
+CINDER_APP( FiretrailApp, RendererGl, prepareSettings)
